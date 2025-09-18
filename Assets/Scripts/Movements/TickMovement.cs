@@ -20,30 +20,52 @@ public class TickMovement : tMovement
 
     public CinemachineFreeLook cam;
 
-    public bool climbing;
+    public bool Grounded;
+    public bool Falling;
+    public float GroundCheckerDist = 0.2f;
+    public float GroundGap = 0.03f;
 
     public float twoPointAlignDist = 0.3f;
     public float twoPointShortAlignDist = 0.2f;
-    public float groundAligmentDist = 0.2f;
     public Vector3 groundAlignOffset;
     public Vector3 verticalMargin;
     public Vector3 boundAngle;
     public Vector3 boundShortAngle;
+    public float Width;
 
+    float mV, mH;
     void Update()
     {
-        //TODO:remove if (!player.IsOwner || (player.IsOwner && !player.CanMove)) { return; }
-
-        float mV = Input.GetAxis("Vertical");
-        float mH = Input.GetAxis("Horizontal");
+        if (!player.IsOwner || (player.IsOwner && !player.CanMove)) { return; }
+        //TODO:remove 
+        
+        mV = Input.GetAxis("Vertical");
+        mH = Input.GetAxis("Horizontal");
 
         Vector3 m = transform.forward * mV;
-        moveDirection = m * MovementSpeed;
-        // moveDirection.x = m.x * MovementSpeed;
-        // moveDirection.z = m.z * MovementSpeed;
 
-        // if (ctrl.isGrounded) { moveDirection.y = -2f; }
-        // else { moveDirection.y += gravity * Time.deltaTime; }
+        //moveDirection = m * MovementSpeed;
+        moveDirection.x = m.x * MovementSpeed;
+        moveDirection.z = m.z * MovementSpeed;
+
+        if (Grounded) { moveDirection.y = m.y * MovementSpeed; }
+        else if (!Falling)
+        {
+            Falling = true;
+        }
+        //TODO: when user climbs wall and reaches to corner , it can stand at the edge of it and it causes to movement on air , so make ground checker and falling system
+        //TODO: FIX
+        if (Falling)
+        {
+            moveDirection.y += gravity * Time.deltaTime;
+            RaycastHit FallingSurfaceAlign;
+            Physics.Raycast(transform.position, -Vector3.up, out FallingSurfaceAlign, math.INFINITY, climbableSurfaces);
+            if (ctrl.velocity.y <= 0.1f)
+            {
+                Falling = false;
+                transform.position = FallingSurfaceAlign.point;
+            }
+        }
 
         ctrl.Move(moveDirection * Time.deltaTime);
 
@@ -60,31 +82,36 @@ public class TickMovement : tMovement
         SyncServerRpc(newMstruct);
     }
 
+    RaycastHit GroundChecking()
+    {
+        RaycastHit groundCheckingHit;
+        Grounded = Physics.Raycast(transform.position, -transform.up, out groundCheckingHit, GroundCheckerDist, climbableSurfaces);
+        return groundCheckingHit;
+    }
     void FixedUpdate()
     {
         AlignmentWithFrontBackRays();
+        GroundChecking();
     }
 
     void AlignWithHit(RaycastHit hit)
     {
         Quaternion targetRotation = Quaternion.FromToRotation(transform.up, hit.normal) * transform.rotation;
-        transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.deltaTime * 10f);
-        //transform.position = hit.point + transform.up * colliderHeight.bounds.extents.y;
+        transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.deltaTime * 50f);
+        //transform.position = hit.point + transform.up * groundAlignOffset.y;
     }
 
     void AlignmentWithFrontBackRays()
     {
-        float mV = Input.GetAxis("Vertical");
-
-        Vector3 sourcePoint = transform.position + transform.up * verticalMargin.y;
+        Vector3 FrontSourcePoint = transform.position + transform.up * verticalMargin.y + transform.forward * boundAngle.y;
+        Vector3 BackSourcePoint = transform.position + transform.up * verticalMargin.y - transform.forward * boundAngle.y;
         RaycastHit frontHit;
-        bool FrontPhysic = Physics.Raycast(sourcePoint, -transform.up + (transform.forward * boundAngle.z), out frontHit, twoPointAlignDist, climbableSurfaces);
+        bool FrontPhysic = Physics.Raycast(FrontSourcePoint, -transform.up + (transform.forward * boundAngle.z), out frontHit, twoPointAlignDist, climbableSurfaces);
         RaycastHit backHit;
-        bool BackPhysic = Physics.Raycast(sourcePoint, -transform.up + (-transform.forward * boundAngle.z), out backHit, twoPointAlignDist, climbableSurfaces);
+        bool BackPhysic = Physics.Raycast(BackSourcePoint, -transform.up + (-transform.forward * boundAngle.z), out backHit, twoPointAlignDist, climbableSurfaces);
 
-        if (BackPhysic) { Debug.DrawLine(sourcePoint, backHit.point, Color.red, 0.1f); }
-        if (FrontPhysic) { Debug.DrawLine(sourcePoint, frontHit.point, Color.green, 0.1f); }
-
+        if (FrontPhysic) { Debug.DrawLine(FrontSourcePoint, frontHit.point, Color.green, 0.1f); }
+        if (BackPhysic) { Debug.DrawLine(BackSourcePoint, backHit.point, Color.red, 0.1f); }
 
         RaycastHit bottomFront, bottomBack;
         Vector3 frontPoint = transform.position + transform.forward * boundShortAngle.z;
@@ -92,29 +119,32 @@ public class TickMovement : tMovement
         bool bottomCheckFront = Physics.Raycast(frontPoint, -transform.up + transform.forward * boundShortAngle.y, out bottomFront, twoPointShortAlignDist, climbableSurfaces);
         bool bottomCheckBack = Physics.Raycast(backPoint, -transform.up - transform.forward * boundShortAngle.y, out bottomBack, twoPointShortAlignDist, climbableSurfaces);
 
-        Debug.DrawLine(frontPoint, bottomFront.point, Color.yellow, 0.1f);
-        Debug.DrawLine(backPoint, bottomBack.point, Color.cyan, 0.1f);
+        if (bottomCheckFront) { Debug.DrawLine(frontPoint, bottomFront.point, Color.yellow, 0.1f); }
+        if (bottomCheckBack) { Debug.DrawLine(backPoint, bottomBack.point, Color.cyan, 0.1f); }
 
         if (mV > 0)
         {
-            AlignWithHit(FrontPhysic ? frontHit : bottomFront);
+            if (FrontPhysic)
+            {
+                AlignWithHit(frontHit);
+            }
+            else if (bottomCheckFront && Vector3.Distance(transform.position, bottomFront.point) >= Width / 2)
+            {
+                AlignWithHit(bottomFront);
+            }
         }
         if (mV < 0)
         {
-            AlignWithHit(BackPhysic ? backHit : bottomBack);
+            //AlignWithHit(BackPhysic ? backHit : bottomBack);
+            if (BackPhysic)
+            {
+                AlignWithHit(backHit);
+            }
+            else if (bottomCheckBack && Vector3.Distance(transform.position, bottomBack.point) >= Width / 2)
+            {
+                AlignWithHit(bottomBack);
+            }
         }
-
-        RaycastHit groundAligner;
-        if (Physics.Raycast(transform.position, -transform.up, out groundAligner, groundAligmentDist, climbableSurfaces))
-        {
-            transform.position = groundAligner.point + transform.up * groundAlignOffset.y;
-        }
-
-        // if (bottomCheckFront || bottomCheckBack)
-        // {
-        //     Vector3 averageNormal = (bottomFront.normal + bottomBack.normal).normalized;
-        //     transform.rotation = Quaternion.FromToRotation(transform.up, averageNormal) * transform.rotation;
-        // }
 
     }
 }
