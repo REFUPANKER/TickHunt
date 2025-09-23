@@ -4585,8 +4585,7 @@ MonoBehaviour:
   cam: {fileID: 7491019200587079889}
   Grounded: 0
   Falling: 0
-  GroundCheckerDist: 0.2
-  GroundGap: 0.03
+  GroundCheckerDist: 0.03
   twoPointAlignDist: 0.08
   twoPointShortAlignDist: 0.2
   groundAlignOffset: {x: 0, y: 0.03, z: 0}
@@ -5282,7 +5281,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 7983309935163050983}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.3289756, y: -0.000000016248649, z: 0.0000000056604796, w: 0.94433844}
+  m_LocalRotation: {x: 0.3289756, y: -0.000000016248645, z: 0.000000005660479, w: 0.94433844}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0

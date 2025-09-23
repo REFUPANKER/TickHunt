@@ -35,5 +35,18 @@ public class ScoreboardItem : NetworkBehaviour
 
     public void SetKill(int kill) => tKill.text = kill.ToString();
     public void SetDeath(int death) => tDeath.text = death.ToString();
-    public void SetMorph(int morph) => iMorph.sprite = morphIcons[morph];
+    public void SetMorph(int morph) => SetMorphServerRpc(morph);
+
+    [ServerRpc]
+    public void SetMorphServerRpc(int morph)
+    {
+        iMorph.sprite = morphIcons[morph];
+        SetMorphClientRpc(morph);
+    }
+
+    [ClientRpc]
+    void SetMorphClientRpc(int morph)
+    {
+        iMorph.sprite = morphIcons[morph];
+    }
 }

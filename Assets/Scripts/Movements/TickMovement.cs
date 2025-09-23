@@ -23,7 +23,6 @@ public class TickMovement : tMovement
     public bool Grounded;
     public bool Falling;
     public float GroundCheckerDist = 0.2f;
-    public float GroundGap = 0.03f;
 
     public float twoPointAlignDist = 0.3f;
     public float twoPointShortAlignDist = 0.2f;
@@ -38,7 +37,7 @@ public class TickMovement : tMovement
     {
         if (!player.IsOwner || (player.IsOwner && !player.CanMove)) { return; }
         //TODO:remove 
-        
+
         mV = Input.GetAxis("Vertical");
         mH = Input.GetAxis("Horizontal");
 
@@ -82,16 +81,15 @@ public class TickMovement : tMovement
         SyncServerRpc(newMstruct);
     }
 
-    RaycastHit GroundChecking()
+    bool GroundChecking()
     {
         RaycastHit groundCheckingHit;
-        Grounded = Physics.Raycast(transform.position, -transform.up, out groundCheckingHit, GroundCheckerDist, climbableSurfaces);
-        return groundCheckingHit;
+        bool r = Physics.Raycast(transform.position, -transform.up, out groundCheckingHit, GroundCheckerDist, climbableSurfaces);
+        return r;
     }
     void FixedUpdate()
     {
         AlignmentWithFrontBackRays();
-        GroundChecking();
     }
 
     void AlignWithHit(RaycastHit hit)
@@ -121,6 +119,12 @@ public class TickMovement : tMovement
 
         if (bottomCheckFront) { Debug.DrawLine(frontPoint, bottomFront.point, Color.yellow, 0.1f); }
         if (bottomCheckBack) { Debug.DrawLine(backPoint, bottomBack.point, Color.cyan, 0.1f); }
+
+        /* 
+        ground alignment is too close to surfaces and it causes to block climbing system
+        while climbing , tick gets little bit up from ground and with that gap code decides to apply gravity
+        */
+        Grounded = FrontPhysic || BackPhysic || bottomCheckFront || bottomCheckBack || GroundChecking();
 
         if (mV > 0)
         {

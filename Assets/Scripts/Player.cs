@@ -28,7 +28,7 @@ public class Player : NetworkBehaviour
     public NetworkVariable<bool> nwHeroSelected = new NetworkVariable<bool>();
     public NetworkVariable<int> nwMorphStatus = new NetworkVariable<int>();
 
-    Canvas scoreboard;
+    CanvasGroup scoreboard;
     [SerializeField] ScoreboardItem scoreboardItemPrefab;
     ScoreboardItem scoreboardItem;
     bool canDisplayScoreboard;
@@ -41,13 +41,6 @@ public class Player : NetworkBehaviour
         Hunter
     }
 
-    void Start()
-    {
-        GameObject sbObj = GameObject.FindGameObjectWithTag("Scoreboard");
-        scoreboard = sbObj.GetComponent<Canvas>();
-        scoreboard.enabled = false;
-    }
-
     public override void OnNetworkSpawn()
     {
         PickHeroScreen.SetActive(false);
@@ -56,8 +49,12 @@ public class Player : NetworkBehaviour
         gTick.cam.enabled = false;
         gPartridge.cam.enabled = false;
 
+        GameObject sbObj = GameObject.FindGameObjectWithTag("Scoreboard");
+        scoreboard = sbObj.GetComponent<CanvasGroup>();
+        scoreboard.alpha = 0;
         if (IsOwner)
         {
+
             pauseResume.OnPaused += () => CanMove = false;
             pauseResume.OnResumed += () => CanMove = true;
         }
@@ -72,11 +69,11 @@ public class Player : NetworkBehaviour
         {
             if (Input.GetKeyDown(KeyCode.Tab))
             {
-                scoreboard.enabled = true;
+                scoreboard.alpha = 1;
             }
             else if (Input.GetKeyUp(KeyCode.Tab))
             {
-                scoreboard.enabled = false;
+                scoreboard.alpha = 0;
             }
         }
     }
@@ -87,9 +84,9 @@ public class Player : NetworkBehaviour
         gameObject.name = name;
         scoreboardItem = Instantiate(scoreboardItemPrefab);
         scoreboardItem.NetworkObject.Spawn();
-        scoreboardItem.transform.SetParent(scoreboard.transform);
         scoreboardItem.SetValuesServerRpc(name, 0, 0, 0);
         nwMorphStatus.OnValueChanged += (int o, int n) => { scoreboardItem.SetMorph(n); };
+        scoreboardItem.transform.SetParent(scoreboard.transform);
         SetNameClientRpc(name);
     }
     [ClientRpc]
@@ -109,9 +106,9 @@ public class Player : NetworkBehaviour
             else
             {
                 SetNameServerRpc(NameInput.text);
-                canDisplayScoreboard = true;
                 NamingScreen.SetActive(false);
                 PickHeroScreen.SetActive(true);
+                canDisplayScoreboard = true;
             }
         }
     }
