@@ -9,16 +9,10 @@ using UnityEngine;
 
 public class TickMovement : tMovement
 {
-    public float MovementSpeed = 4;
-    public float RotationSpeed = 200;
-    public float gravity = -9.81f;
-    private Vector3 moveDirection;
     public LayerMask climbableSurfaces;
 
     public float FlipLimit = -0.2f;
     public KeyCode FlipKey = KeyCode.R;
-
-    public CinemachineFreeLook cam;
 
     public bool Grounded;
     public bool Falling;
@@ -35,8 +29,7 @@ public class TickMovement : tMovement
     float mV, mH;
     void Update()
     {
-        if (!player.IsOwner || (player.IsOwner && !player.CanMove)) { return; }
-        //TODO:remove 
+        if (!CheckCanMove()) { return; }
 
         mV = Input.GetAxis("Vertical");
         mH = Input.GetAxis("Horizontal");

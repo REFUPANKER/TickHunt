@@ -1,13 +1,24 @@
 using System.Collections;
 using System.Collections.Generic;
+using Cinemachine;
 using Unity.Netcode;
 using UnityEngine;
 
+/// <summary>
+/// simple movement code sample is in <br></br> <see cref="PerformStandartMovement"/>
+/// </summary>
 public class tMovement : NetworkBehaviour
 {
     public Player player;
     public CharacterController ctrl;
     public Animator animator;
+    public CinemachineVirtualCameraBase cam;
+    
+    public Vector3 moveDirection;
+    public float MovementSpeed = 4;
+    public float RotationSpeed = 200;
+    public float gravity = -9.81f;
+
     public struct mStruct : INetworkSerializable
     {
         public Vector3 pos;
@@ -55,5 +66,35 @@ public class tMovement : NetworkBehaviour
         {
             SetNewValues(newM);
         }
+    }
+
+    public void PerformStandartMovement(bool CheckOwner = true)
+    {
+        if (CheckOwner && !CheckCanMove()) { return; }
+
+        float mV = Input.GetAxis("Vertical");
+        float mH = Input.GetAxis("Horizontal");
+
+        Vector3 m = transform.forward * mV;
+
+        moveDirection.x = m.x * MovementSpeed;
+        moveDirection.z = m.z * MovementSpeed;
+
+        if (ctrl.isGrounded) { moveDirection.y = -2f; }
+        else { moveDirection.y += gravity * Time.deltaTime; }
+
+        ctrl.Move(moveDirection * Time.deltaTime);
+
+        transform.Rotate(Vector3.up * mH * RotationSpeed * Time.deltaTime);
+
+        animator.SetFloat("Velocity", ctrl.velocity.magnitude);
+
+        mStruct newMstruct = GetNewValuesStruct();
+        SyncServerRpc(newMstruct);
+    }
+
+    public bool CheckCanMove()
+    {
+        return player.IsOwner && player.CanMove;
     }
 }

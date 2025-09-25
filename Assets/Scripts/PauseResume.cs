@@ -31,7 +31,10 @@ public class PauseResume : MonoBehaviour
         Cursor.visible = Paused;
         for (int i = 0; i < disableOnPause.Count; i++)
         {
-            disableOnPause[i]?.SetActive(false);
+            if (disableOnPause[i] != null)
+            {
+                disableOnPause[i]?.SetActive(false);
+            }
         }
         OnPaused?.Invoke();
     }
@@ -42,7 +45,10 @@ public class PauseResume : MonoBehaviour
         Cursor.visible = Paused;
         for (int i = 0; i < disableOnPause.Count; i++)
         {
-            disableOnPause[i]?.SetActive(true);
+            if (disableOnPause[i] != null)
+            {
+                disableOnPause[i]?.SetActive(true);
+            }
         }
         OnResumed?.Invoke();
     }

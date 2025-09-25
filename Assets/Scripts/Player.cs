@@ -16,8 +16,18 @@ public class Player : NetworkBehaviour
     public bool CanMove = true;
     public PauseResume pauseResume;
 
-    public TickMovement gTick;
-    public PartridgeMovement gPartridge;
+    // public TickMovement gTick;
+    // public PartridgeMovement gPartridge;
+    
+    /// <summary>
+    /// order must be like this<br></br>
+    /// Tick<br></br>
+    /// Partridge<br></br>
+    /// Hunter<br></br>
+    /// InsectSprayer<br></br>
+    /// </summary>
+    [Tooltip("Order : Tick,Partridge,Hunter,InsectSprayer")]
+    public tMovement[] Heroes;
 
     public GameObject PickHeroScreen;
     public GameObject NamingScreen;
@@ -32,6 +42,7 @@ public class Player : NetworkBehaviour
     [SerializeField] ScoreboardItem scoreboardItemPrefab;
     ScoreboardItem scoreboardItem;
     bool canDisplayScoreboard;
+
     public enum MorphTypes
     {
         Spectator,
@@ -44,10 +55,12 @@ public class Player : NetworkBehaviour
     public override void OnNetworkSpawn()
     {
         PickHeroScreen.SetActive(false);
-        gTick.gameObject.SetActive(false);
-        gPartridge.gameObject.SetActive(false);
-        gTick.cam.enabled = false;
-        gPartridge.cam.enabled = false;
+
+        // gTick.gameObject.SetActive(false);
+        // gPartridge.gameObject.SetActive(false);
+        // gTick.cam.enabled = false;
+        // gPartridge.cam.enabled = false;
+        Morph(0);
 
         GameObject sbObj = GameObject.FindGameObjectWithTag("Scoreboard");
         scoreboard = sbObj.GetComponent<CanvasGroup>();
@@ -121,8 +134,7 @@ public class Player : NetworkBehaviour
     [ServerRpc]
     public void PickHeroServerRpc(int choice)
     {
-        gTick.gameObject.SetActive(choice == 1);
-        gPartridge.gameObject.SetActive(choice == 2);
+        Morph(choice);
         nwMorphStatus.Value = choice;
         nwHeroSelected.Value = true;
         PickHeroClientRpc(choice);
@@ -131,8 +143,7 @@ public class Player : NetworkBehaviour
     [ClientRpc]
     public void PickHeroClientRpc(int choice)
     {
-        gTick.gameObject.SetActive(choice == 1);
-        gPartridge.gameObject.SetActive(choice == 2);
+        Morph(choice);
     }
 
     public void PickHeroBtn(int choice)
@@ -142,11 +153,24 @@ public class Player : NetworkBehaviour
             PickHeroScreen.SetActive(false);
             pauseResume.Resume();
             PickHeroServerRpc(choice);
-            gTick.cam.enabled = choice == 1;
-            gPartridge.cam.enabled = choice == 2;
+            Heroes[choice - 1].cam.enabled = true;
         }
     }
 
-
+    public void Morph(int choice)
+    {
+        if (choice == 0 || choice > Heroes.Length)
+        {
+            for (int i = 0; i < Heroes.Length; i++)
+            {
+                Heroes[i].cam.enabled = false;
+                Heroes[i].gameObject.SetActive(false);
+            }
+        }
+        else
+        {
+            Heroes[choice - 1].gameObject.SetActive(true);
+        }
+    }
 
 }
