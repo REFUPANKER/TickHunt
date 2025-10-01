@@ -13,7 +13,7 @@ public class tMovement : NetworkBehaviour
     public CharacterController ctrl;
     public Animator animator;
     public CinemachineVirtualCameraBase cam;
-    
+
     public Vector3 moveDirection;
     public float MovementSpeed = 4;
     public float RotationSpeed = 200;
@@ -68,6 +68,15 @@ public class tMovement : NetworkBehaviour
         }
     }
 
+    public bool CheckCanMove()
+    {
+        return player.IsOwner && player.CanMove;
+    }
+
+    /// <summary>
+    /// horizontal values rotates player
+    /// </summary>
+    /// <param name="CheckOwner"></param>
     public void PerformStandartMovement(bool CheckOwner = true)
     {
         if (CheckOwner && !CheckCanMove()) { return; }
@@ -93,8 +102,33 @@ public class tMovement : NetworkBehaviour
         SyncServerRpc(newMstruct);
     }
 
-    public bool CheckCanMove()
+
+
+    /// <summary>
+    /// horizontal values , moves player
+    /// </summary>
+    /// <param name="CheckOwner"></param>
+    public void PerformMovementOpt2(bool CheckOwner = true)
     {
-        return player.IsOwner && player.CanMove;
+        if (CheckOwner && !CheckCanMove()) { return; }
+
+        float mV = Input.GetAxis("Vertical");
+        float mH = Input.GetAxis("Horizontal");
+
+        Vector3 m = transform.forward * mV + transform.right * mH;
+        if (m.magnitude > 1) { m.Normalize(); }
+
+        moveDirection.x = m.x * MovementSpeed;
+        moveDirection.z = m.z * MovementSpeed;
+
+        if (ctrl.isGrounded) { moveDirection.y = -2f; }
+        else { moveDirection.y += gravity * Time.deltaTime; }
+
+        ctrl.Move(moveDirection * Time.deltaTime);
+
+        animator.SetFloat("Velocity", ctrl.velocity.magnitude);
+
+        mStruct newMstruct = GetNewValuesStruct();
+        SyncServerRpc(newMstruct);
     }
 }

@@ -40,13 +40,13 @@ public class ScoreboardItem : NetworkBehaviour
     [ServerRpc]
     public void SetMorphServerRpc(int morph)
     {
-        iMorph.sprite = morphIcons[morph];
+        iMorph.sprite = morphIcons[morph-1];
         SetMorphClientRpc(morph);
     }
 
     [ClientRpc]
     void SetMorphClientRpc(int morph)
     {
-        iMorph.sprite = morphIcons[morph];
+        iMorph.sprite = morphIcons[morph-1];
     }
 }

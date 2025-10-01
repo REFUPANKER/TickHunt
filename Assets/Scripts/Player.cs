@@ -18,7 +18,7 @@ public class Player : NetworkBehaviour
 
     // public TickMovement gTick;
     // public PartridgeMovement gPartridge;
-    
+
     /// <summary>
     /// order must be like this<br></br>
     /// Tick<br></br>
@@ -54,13 +54,8 @@ public class Player : NetworkBehaviour
 
     public override void OnNetworkSpawn()
     {
-        PickHeroScreen.SetActive(false);
-
-        // gTick.gameObject.SetActive(false);
-        // gPartridge.gameObject.SetActive(false);
-        // gTick.cam.enabled = false;
-        // gPartridge.cam.enabled = false;
-        Morph(0);
+        PickHeroScreen.SetActive(false);// disabled for setting player name first
+        Morph(-1);
 
         GameObject sbObj = GameObject.FindGameObjectWithTag("Scoreboard");
         scoreboard = sbObj.GetComponent<CanvasGroup>();
@@ -159,7 +154,7 @@ public class Player : NetworkBehaviour
 
     public void Morph(int choice)
     {
-        if (choice == 0 || choice > Heroes.Length)
+        if (choice == -1 || choice > Heroes.Length)
         {
             for (int i = 0; i < Heroes.Length; i++)
             {

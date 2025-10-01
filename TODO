@@ -1,0 +1,27 @@
+------------------ FIX ------------------ 
+
+Hunter Aiming system
+    hands aligment on aim/not aiming states
+Tick movement   
+    ground alignment needs to improved
+
+Add Head Rotation with camera to all heroes
+scene sync 
+    late users cant see to latest state of game
+
+------------------ ADD ------------------ 
+
+hero : Insect sprayer
+
+Human heroes abilities
+    dart gun firing system
+    sprayed area visuals > decal shaders
+
+lobby system
+
+--------------- CHANGE ------------------ 
+
+Map
+
+
+
