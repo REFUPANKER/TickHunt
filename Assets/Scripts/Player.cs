@@ -43,6 +43,9 @@ public class Player : NetworkBehaviour
     ScoreboardItem scoreboardItem;
     bool canDisplayScoreboard;
 
+    public delegate void HeroSelectedEvent(MorphTypes morph, Transform hero);
+    public event HeroSelectedEvent HeroSelected;
+
     public enum MorphTypes
     {
         Spectator,
@@ -165,6 +168,7 @@ public class Player : NetworkBehaviour
         else
         {
             Heroes[choice - 1].gameObject.SetActive(true);
+            HeroSelected?.Invoke((MorphTypes)(choice - 1), Heroes[choice - 1].transform);
         }
     }
 

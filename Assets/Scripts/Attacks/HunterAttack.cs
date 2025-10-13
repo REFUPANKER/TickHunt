@@ -3,6 +3,7 @@ using UnityEngine;
 
 public class HunterAttack : NetworkBehaviour
 {
+    [SerializeField] tMovement m;
     public Transform dartGunMuzzle;
     public Bullet dartGunBullet;
     public float distance = 15, MaxDistance = 100;
@@ -11,7 +12,7 @@ public class HunterAttack : NetworkBehaviour
 
     void Update()
     {
-        if (!IsOwner) { return; }
+        if (!m.CheckCanMove()) { return; }
 
         if (Input.GetKeyDown(FireKey))
         {
