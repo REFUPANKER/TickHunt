@@ -1,6 +1,5 @@
 using Unity.Netcode;
 using UnityEngine;
-using UnityEngine.UI;
 
 public class tHealth : NetworkBehaviour
 {
@@ -9,110 +8,136 @@ public class tHealth : NetworkBehaviour
         + simple health script 
         + players can get effected by something 
         and it can keep effecting for a while 
-        so it contains ApplyEffect method
-
-        -- ApplyEffect 
-        > tick , hunter : gets poisioned 
-            - InsectSprayer s spray , effetcs both
-        > partridge , insectSprayer : gets fainted by hunter s darts
-            - InsectSprayer needs to get X darts to get fainted
-            - Single dart can faint partridge
 
         -- Regeneration [Ability for Partridge as default] (optional : it can be triggered with collecting items)
+
+
+        ---------- what happens if heroes get hit by dart ----------
+        tick : dies
+        partridge : gets fainted for X seconds (sprayer can help to revive)
+        insect sprayer : per X shots adds more slowness effect for X seconds
+        hunter : hunter morph is limited with 1 player and player cant hit itself
+
+        ---------- what happens if heroes get sprayed ----------
+        tick : slowness effect and damage (increased by the time stayed in sprayed place) 
+        partridge : slight slowness effect with health boost (limited with X health point)
+        insect sprayer : doesnt effects to self
+        hunter : gets slowness and damage but less than tick
     */
 
     [SerializeField] Player player;
 
     private int defaultHealth;
-    [SerializeField] NetworkVariable<int> Health = new NetworkVariable<int>();
+    public int Health;
 
-    public Canvas WorldUi;
-    public Slider UiHealthBar, WorldHealthBar;
+    public Player.MorphTypes morph;
 
-    /// <summary>
-    /// follow this order
-    /// <list type="number">
-    /// <item><description>Tick</description></item>
-    /// <item><description>Partridge</description></item>
-    /// <item><description>InsectSpraye</description></item>
-    /// <item><description>Hunte</description></item>
-    /// </list>
-    /// </summary>
     [Tooltip("World ui setup")]
-    public Vector3[] WorldUiMargins;
-    public Vector2[] WorldUiSizes;
-    void Start()
-    {
-        WorldUi.gameObject.SetActive(false);
-        UiHealthBar.gameObject.SetActive(false);
-        WorldHealthBar.gameObject.SetActive(false);
-    }
-    public override void OnNetworkSpawn()
-    {
-        player.HeroSelected += HeroSelected;
-    }
+    public Vector3 WorldUiMargin;
+    public Vector2 WorldUiSize;
 
-    void HeroSelected(Player.MorphTypes morph, Transform hero)
+    public AudioSource sfxDamage, sfxHeal, sfxDeath, sfxEffected;
+
+
+    public virtual void Start()
     {
-        if (morph == Player.MorphTypes.Spectator)
+        defaultHealth = Health;
+        player.HealthBarUi.value = player.HealthBarUi.maxValue = defaultHealth;
+        player.HealthBarWorld.value = player.HealthBarWorld.maxValue = defaultHealth;
+        player.HealthWorldUi.transform.SetParent(transform);
+        RectTransform wrt = player.HealthWorldUi.GetComponent<RectTransform>();
+        wrt.sizeDelta = WorldUiSize;
+        player.HealthWorldUi.transform.position = WorldUiMargin;
+        if (IsOwner)
         {
-            UiHealthBar.enabled = false;
-            WorldHealthBar.enabled = false;
-            player.HeroSelected -= HeroSelected;
-            return;
+            if (morph != Player.MorphTypes.Spectator)// ui and world bars are disabled on Player.Start() 
+            {
+                SetPanelsVisibility(true, false);
+                SetPanelsServerRpc();
+            }
         }
-        
-        WorldUi.transform.SetParent(hero);
-        WorldUi.gameObject.SetActive(!IsOwner);
-
-        UiHealthBar.gameObject.SetActive(true);
-        WorldHealthBar.gameObject.SetActive(true);
-        defaultHealth = Health.Value;
-        UiHealthBar.maxValue = Health.Value;
-        WorldHealthBar.maxValue = Health.Value;
-        UiHealthBar.value = Health.Value;
-        WorldHealthBar.value = Health.Value;
-
-        RectTransform wrt = WorldUi.GetComponent<RectTransform>();
-        wrt.sizeDelta = WorldUiSizes[(int)morph - 1];
-        WorldUi.transform.position = WorldUiMargins[(int)morph - 1];
-
-        player.HeroSelected -= HeroSelected;
     }
 
-    public void Damage(int damage)
+    [ServerRpc]
+    void SetPanelsServerRpc()
     {
-        // Animations
-        SetHealthServerRpc(Health.Value - damage);
+        SetPanelsClientRpc();
+    }
+    [ClientRpc]
+    void SetPanelsClientRpc()
+    {
+        if (!IsOwner)
+        {
+            SetPanelsVisibility(false, true);
+        }
     }
 
-    public void Heal(int heal)
+    void SetPanelsVisibility(bool uiBar, bool worldBar)
+    {
+        player.HealthBarUi.gameObject.SetActive(uiBar);
+        player.HealthBarWorld.gameObject.SetActive(worldBar);
+    }
+
+    ///<summary> call base functions </summary> 
+    public virtual void Damage(int damage)
     {
         // Animations
-        SetHealthServerRpc(Health.Value + heal);
+        if (sfxDamage != null) { sfxDamage.Play(); }
+
+        SetHealthServerRpc(Health - damage);
+        if (Health - damage <= 0)
+        {
+            sfxDeath?.Play();
+        }
+    }
+
+    ///<summary> call base functions </summary> 
+    public virtual void Heal(int heal)
+    {
+        // Animations
+        sfxHeal?.Play();
+        SetHealthServerRpc(Health + heal);
+    }
+
+    private void ReFill()
+    {
+        sfxHeal?.Play();
+        SetHealthServerRpc(defaultHealth);
+    }
+
+    ///<summary> Base functions uses sfxEffected audio source</summary>
+    public virtual void Effect_Poision()
+    {
+        sfxEffected?.Play();
+    }
+
+    ///<summary> Base functions uses sfxEffected audio source</summary>
+    public virtual void Effect_Fainted()
+    {
+        sfxEffected?.Play();
     }
 
     [ServerRpc(RequireOwnership = false)]
     private void SetHealthServerRpc(int healthPoint)
     {
-        Health.Value = Mathf.Clamp(healthPoint, 0, defaultHealth);
-        DisplayHealth();
+        int val = Mathf.Clamp(healthPoint, 0, defaultHealth);
+        Health = val;
+        DisplayHealth(val);
+        SetHealthClientRpc(val);
+    }
+    [ClientRpc]
+    private void SetHealthClientRpc(int healthPoint)
+    {
+        if (!IsServer)
+        {
+            Health = healthPoint;
+            DisplayHealth(healthPoint);
+        }
     }
 
-    private void ReFill()
+    private void DisplayHealth(int health)
     {
-        SetHealthServerRpc(defaultHealth);
-    }
-
-    private void DisplayHealth()
-    {
-        if (IsOwner)
-        {
-            UiHealthBar.value = Health.Value;
-        }
-        else
-        {
-            WorldHealthBar.value = Health.Value;
-        }
+        player.HealthBarUi.value = health;
+        player.HealthBarWorld.value = health;
     }
 }

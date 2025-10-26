@@ -1,10 +1,4 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using Cinemachine;
 using Unity.Mathematics;
-using Unity.Netcode;
-using Unity.VisualScripting;
 using UnityEngine;
 
 public class TickMovement : tMovement

@@ -4,18 +4,29 @@ Tick movement
     ground alignment needs to improved
 
 Add Head Rotation with camera to all heroes
+
 scene sync 
     late users cant see to latest state of game
 
 ------------------ ADD ------------------ 
-attack systems
+user data system (json)
+    Name,Settings and more
+    [Future plan] accessories
+
+Attack systems
+    + animations
+
 Human heroes abilities
     dart gun firing system
     sprayed area visuals > decal shaders
 
-lobby system
+lobby system (in unity 6 , relay ? is changed/moved (idk) , fix it)
 
 team visuals by layer based structure (LayerMask : Team1/Team2 >> outline(optional) : red/blue )
+
+scanning environment ability
+    expands a sphere for detecting enemy heroes 
+        detected hero gets highlighted for limited time
 
 --------------- CHANGE ------------------ 
 

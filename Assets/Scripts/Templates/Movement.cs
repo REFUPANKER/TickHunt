@@ -1,6 +1,4 @@
-using System.Collections;
-using System.Collections.Generic;
-using Cinemachine;
+using Unity.Cinemachine;
 using Unity.Netcode;
 using UnityEngine;
 
@@ -70,7 +68,7 @@ public class tMovement : NetworkBehaviour
 
     public bool CheckCanMove()
     {
-        return player.IsOwner && player.CanMove;
+        return IsOwner && player.CanMove;
     }
 
     /// <summary>

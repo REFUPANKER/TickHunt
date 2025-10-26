@@ -23,7 +23,7 @@ public class InsectSprayerMovement : tMovement
 
     public struct CamHeadMovementValues : INetworkSerializable
     {
-        public Vector3 camPos, headRigPos, sprayGunPos;
+        public Vector3 camPos, headRigPos, sprayGunPos, sprayPos;
         public Quaternion camRot;
         public void NetworkSerialize<T>(BufferSerializer<T> s) where T : IReaderWriter
         {
@@ -31,12 +31,14 @@ public class InsectSprayerMovement : tMovement
             s.SerializeValue(ref headRigPos);
             s.SerializeValue(ref sprayGunPos);
             s.SerializeValue(ref camRot);
+            s.SerializeValue(ref sprayPos);
         }
     }
     NetworkVariable<CamHeadMovementValues> nvCamHeadMv = new NetworkVariable<CamHeadMovementValues>();
 
     public override void OnNetworkSpawn()
     {
+        base.OnNetworkSpawn();
         SprayPointer.gameObject.SetActive(false);
     }
 
@@ -59,15 +61,7 @@ public class InsectSprayerMovement : tMovement
         transform.Rotate(Vector3.up * mouseX);
         cam.transform.localRotation = Quaternion.Euler(fpsRx, 0f, 0f);
 
-        CamHeadMovementValues nChmVals = new CamHeadMovementValues()
-        {
-            camPos = cam.transform.position,
-            camRot = cam.transform.localRotation,
-            headRigPos = HeadRigPointer.transform.position,
-            sprayGunPos = sprayGun.position
-        };
 
-        SyncCameraServerRpc(nChmVals);
 
 
         RaycastHit sprayHit;
@@ -76,9 +70,22 @@ public class InsectSprayerMovement : tMovement
             if (!SprayPointer.gameObject.activeSelf) { SprayPointer.gameObject.SetActive(true); }
             SprayPointer.position = sprayHit.point;
             SprayPointer.rotation = Quaternion.LookRotation(Vector3.up);
-        }else{
+        }
+        else
+        {
             if (SprayPointer.gameObject.activeSelf) { SprayPointer.gameObject.SetActive(false); }
         }
+
+        CamHeadMovementValues nChmVals = new CamHeadMovementValues()
+        {
+            camPos = cam.transform.position,
+            camRot = cam.transform.localRotation,
+            headRigPos = HeadRigPointer.transform.position,
+            sprayGunPos = sprayGun.position,
+            sprayPos = SprayPointer.position
+        };
+
+        SyncCameraServerRpc(nChmVals);
     }
 
     void LateUpdate()
@@ -108,6 +115,7 @@ public class InsectSprayerMovement : tMovement
         cam.transform.localRotation = chmVals.camRot;
         HeadRigPointer.transform.position = chmVals.headRigPos;
         sprayGun.position = chmVals.sprayGunPos;
+        SprayPointer.position=chmVals.sprayPos;
     }
 
 }

@@ -25,17 +25,18 @@ public class HunterMovement : tMovement
     public Transform ArmRigMidPointerLeft;
     public Vector3 armRigMidMargin;
 
-
     public struct CamHeadMovementValues : INetworkSerializable
     {
-        public Vector3 camPos;
-        public Vector3 headRigPos;
+        public Vector3 camPos, headRigPos, dartGunPos, armRmLeft, armRmRight;
         public Quaternion camRot;
         public void NetworkSerialize<T>(BufferSerializer<T> s) where T : IReaderWriter
         {
             s.SerializeValue(ref camPos);
-            s.SerializeValue(ref headRigPos);
             s.SerializeValue(ref camRot);
+            s.SerializeValue(ref headRigPos);
+            s.SerializeValue(ref dartGunPos);
+            s.SerializeValue(ref armRmLeft);
+            s.SerializeValue(ref armRmRight);
         }
     }
     NetworkVariable<CamHeadMovementValues> nvCamHeadMv = new NetworkVariable<CamHeadMovementValues>();
@@ -63,15 +64,6 @@ public class HunterMovement : tMovement
         transform.Rotate(Vector3.up * mouseX);
         cam.transform.localRotation = Quaternion.Euler(fpsRx, 0f, 0f);
 
-        CamHeadMovementValues nChmVals = new CamHeadMovementValues()
-        {
-            camPos = cam.transform.position,
-            camRot = cam.transform.localRotation,
-            headRigPos = HeadRigPointer.transform.position,
-        };
-
-        SyncCameraServerRpc(nChmVals);
-
         if (Input.GetKeyDown(KeyCode.Mouse1))
         {
             previousDartGunMargin = DartGunMargin;
@@ -81,6 +73,18 @@ public class HunterMovement : tMovement
         {
             DartGunMargin = previousDartGunMargin;
         }
+
+        CamHeadMovementValues nChmVals = new CamHeadMovementValues()
+        {
+            camPos = cam.transform.position,
+            camRot = cam.transform.localRotation,
+            headRigPos = HeadRigPointer.transform.position,
+            armRmLeft = ArmRigMidPointerLeft.localPosition,
+            armRmRight = ArmRigMidPointerRight.localPosition,
+            dartGunPos = DartGunMargin
+        };
+
+        SyncCameraServerRpc(nChmVals);
     }
 
     void LateUpdate()
@@ -109,6 +113,12 @@ public class HunterMovement : tMovement
         cam.transform.position = chmVals.camPos;
         cam.transform.localRotation = chmVals.camRot;
         HeadRigPointer.transform.position = chmVals.headRigPos;
+
+        ArmRigMidPointerLeft.localPosition = chmVals.armRmLeft;
+        ArmRigMidPointerRight.localPosition = chmVals.armRmRight;
+
+        dartGun.localPosition = chmVals.dartGunPos;
+        dartGun.rotation = Quaternion.LookRotation(cam.transform.forward);
     }
 
 }

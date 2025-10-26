@@ -1,8 +1,9 @@
 using System.Collections;
 using System.Collections.Generic;
+using Unity.Netcode;
 using UnityEngine;
 
-public class PauseResume : MonoBehaviour
+public class PauseResume : NetworkBehaviour
 {
     public bool Paused;
     public KeyCode PauseKey = KeyCode.P;
@@ -60,6 +61,7 @@ public class PauseResume : MonoBehaviour
 
     void Update()
     {
+        if (!IsOwner) { return; }
         if (Input.GetKeyDown(PauseKey))
         {
             Auto();
