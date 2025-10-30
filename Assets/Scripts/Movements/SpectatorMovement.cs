@@ -19,6 +19,7 @@ public class SpectatorMovement : tMovement
 
     void Update()
     {
+        SyncFromClientSide();
         if (!CheckCanMove()) { return; }
 
         float mouseX = Input.GetAxis("Mouse X") * mouseSens * Time.deltaTime;

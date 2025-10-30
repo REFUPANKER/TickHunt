@@ -77,6 +77,7 @@ public class tMovement : NetworkBehaviour
     /// <param name="CheckOwner"></param>
     public void PerformStandartMovement(bool CheckOwner = true)
     {
+        SyncFromClientSide();
         if (CheckOwner && !CheckCanMove()) { return; }
 
         float mV = Input.GetAxis("Vertical");
@@ -108,6 +109,7 @@ public class tMovement : NetworkBehaviour
     /// <param name="CheckOwner"></param>
     public void PerformMovementOpt2(bool CheckOwner = true)
     {
+        SyncFromClientSide();
         if (CheckOwner && !CheckCanMove()) { return; }
 
         float mV = Input.GetAxis("Vertical");
@@ -128,5 +130,14 @@ public class tMovement : NetworkBehaviour
 
         mStruct newMstruct = GetNewValuesStruct();
         SyncServerRpc(newMstruct);
+    }
+
+
+    public void SyncFromClientSide()
+    {
+        if (!IsOwner)
+        {
+            SetNewValues(player.nwMovement.Value);
+        }
     }
 }

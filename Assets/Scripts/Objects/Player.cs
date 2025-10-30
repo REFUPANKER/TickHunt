@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using TMPro;
+using Unity.Collections;
 using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.UI;
@@ -44,6 +45,7 @@ public class Player : NetworkBehaviour
     public NetworkVariable<tMovement.mStruct> nwMovement = new NetworkVariable<tMovement.mStruct>();
     public NetworkVariable<bool> nwHeroSelected = new NetworkVariable<bool>();
     public NetworkVariable<int> nwMorphStatus = new NetworkVariable<int>();
+    public NetworkVariable<FixedString32Bytes> nwPlayerName = new NetworkVariable<FixedString32Bytes>();
 
 
     [Header("Scoreboard")]
@@ -76,11 +78,23 @@ public class Player : NetworkBehaviour
         PickHeroScreen.SetActive(false);
         if (IsOwner)
         {
-            pauseResume.OnPaused += () => CanMove = false;
-            pauseResume.OnResumed += () => CanMove = true;
+            pauseResume.OnStateChanged += (bool paused) => CanMove = !paused;
             nwMorphStatus.OnValueChanged += (int o, int n) => { if (scoreboardItem != null) { scoreboardItem.SetMorph(n); } };
         }
-        Morph(-1); // disable all hero objects for hero selection system
+        Morph(-1);// disable all hero objects for hero selection system
+        if (nwHeroSelected.Value == true)
+        {
+            Morph(nwMorphStatus.Value);
+        }
+        if (!string.IsNullOrEmpty(nwPlayerName.Value.ToString()))
+        {
+            gameObject.name = nwPlayerName.Value.ToString();
+            if (IsServer)
+            {
+                SetNameClientRpc(nwPlayerName.Value.ToString());
+            }
+        }
+
         StartCoroutine(SpawnInterval());
     }
     IEnumerator SpawnInterval()
@@ -126,23 +140,28 @@ public class Player : NetworkBehaviour
         soam = findSoam.GetComponent<SceneObjectAccessManager>();
     }
     [ServerRpc]
-    public void SetNameServerRpc(string name)
+    public void SetNameServerRpc(string username)
     {
-        gameObject.name = name;
+        gameObject.name = username;
+        nwPlayerName.Value = username;
         scoreboardItem = Instantiate(scoreboardItemPrefab);
         scoreboardItem.NetworkObject.Spawn();
         scoreboardItem.transform.SetParent(soam.scoreboard.transform);
-        scoreboardItem.SetValuesServerRpc(name, 0, 0, 0);
-        SetNameClientRpc(name);
+        scoreboardItem.SetValuesServerRpc(username, 0, 0, 0);
+        SetNameClientRpc(username);
     }
     [ClientRpc]
-    public void SetNameClientRpc(string name)
+    public void SetNameClientRpc(string username)
     {
-        gameObject.name = name;
+        gameObject.name = username;
+        if (scoreboardItem != null)
+        {
+            scoreboardItem.SetName(username);
+        }
     }
-    void SetNameCaller(string name)
+    void SetNameCaller(string username)
     {
-        SetNameServerRpc(name);
+        SetNameServerRpc(username);
         NamingScreen.SetActive(false);
         PickHeroScreen.SetActive(true);
         canDisplayScoreboard = true;
@@ -209,5 +228,4 @@ public class Player : NetworkBehaviour
             Heroes[choice - 1].gameObject.SetActive(true);
         }
     }
-
 }

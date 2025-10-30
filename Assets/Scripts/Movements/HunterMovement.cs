@@ -87,11 +87,6 @@ public class HunterMovement : tMovement
         SyncCameraServerRpc(nChmVals);
     }
 
-    void LateUpdate()
-    {
-        if (!CheckCanMove()) { return; }
-    }
-
     [ServerRpc]
     void SyncCameraServerRpc(CamHeadMovementValues chmVals)
     {

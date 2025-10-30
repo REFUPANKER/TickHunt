@@ -8,11 +8,8 @@ public class PauseResume : NetworkBehaviour
     public bool Paused;
     public KeyCode PauseKey = KeyCode.P;
 
-    public delegate void pausedEvent();
-    public event pausedEvent OnPaused;
-
-    public delegate void resumedEvent();
-    public event resumedEvent OnResumed;
+    public delegate void stateChanged(bool paused);
+    public event stateChanged OnStateChanged;
 
     public bool ResumeAtStart = true;
 
@@ -37,7 +34,7 @@ public class PauseResume : NetworkBehaviour
                 disableOnPause[i]?.SetActive(false);
             }
         }
-        OnPaused?.Invoke();
+        OnStateChanged?.Invoke(true);
     }
     public void Resume()
     {
@@ -51,7 +48,7 @@ public class PauseResume : NetworkBehaviour
                 disableOnPause[i]?.SetActive(true);
             }
         }
-        OnResumed?.Invoke();
+        OnStateChanged?.Invoke(false);
     }
 
     public void Auto()

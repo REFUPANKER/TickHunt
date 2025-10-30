@@ -82,12 +82,12 @@ public class tHealth : NetworkBehaviour
     public virtual void Damage(int damage)
     {
         // Animations
-        if (sfxDamage != null) { sfxDamage.Play(); }
+        PlaySfx(sfxTypes.damage);
 
         SetHealthServerRpc(Health - damage);
         if (Health - damage <= 0)
         {
-            sfxDeath?.Play();
+            PlaySfx(sfxTypes.death);
         }
     }
 
@@ -95,26 +95,26 @@ public class tHealth : NetworkBehaviour
     public virtual void Heal(int heal)
     {
         // Animations
-        sfxHeal?.Play();
+        PlaySfx(sfxTypes.heal);
         SetHealthServerRpc(Health + heal);
     }
 
     private void ReFill()
     {
-        sfxHeal?.Play();
+        PlaySfx(sfxTypes.heal);
         SetHealthServerRpc(defaultHealth);
     }
 
     ///<summary> Base functions uses sfxEffected audio source</summary>
     public virtual void Effect_Poision()
     {
-        sfxEffected?.Play();
+        PlaySfx(sfxTypes.effected);
     }
 
     ///<summary> Base functions uses sfxEffected audio source</summary>
     public virtual void Effect_Fainted()
     {
-        sfxEffected?.Play();
+        PlaySfx(sfxTypes.effected);
     }
 
     [ServerRpc(RequireOwnership = false)]
@@ -139,5 +139,30 @@ public class tHealth : NetworkBehaviour
     {
         player.HealthBarUi.value = health;
         player.HealthBarWorld.value = health;
+    }
+
+    enum sfxTypes
+    {
+        damage, heal, death, effected
+    }
+    void PlaySfx(sfxTypes sfxType)
+    {
+        PlaySfxCases(sfxType);
+        PlaySfxClientRpc(sfxType);
+    }
+    [ClientRpc]
+    void PlaySfxClientRpc(sfxTypes sfxType)
+    {
+        PlaySfxCases(sfxType);
+    }
+    void PlaySfxCases(sfxTypes sfxType)
+    {
+        switch (sfxType)
+        {
+            case sfxTypes.damage: if (sfxDamage != null) sfxDamage.Play(); break;
+            case sfxTypes.heal: if (sfxHeal != null) sfxHeal.Play(); break;
+            case sfxTypes.death: if (sfxDeath != null) sfxDeath.Play(); break;
+            case sfxTypes.effected: if (sfxEffected != null) sfxEffected.Play(); break;
+        }
     }
 }

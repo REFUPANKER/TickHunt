@@ -4,15 +4,8 @@ using UnityEngine;
 
 public class JsonDataSavingSystem : MonoBehaviour
 {
-    // Start is called before the first frame update
-    void Start()
+    public void SaveData()
     {
-        
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
+        JsonUtility.ToJson("", true);
     }
 }

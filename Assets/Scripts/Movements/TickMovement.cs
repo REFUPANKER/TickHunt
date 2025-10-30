@@ -23,6 +23,7 @@ public class TickMovement : tMovement
     float mV, mH;
     void Update()
     {
+        SyncFromClientSide();
         if (!CheckCanMove()) { return; }
 
         mV = Input.GetAxis("Vertical");

@@ -6542,7 +6542,7 @@ GameObject:
   - component: {fileID: 583614681}
   - component: {fileID: 583614680}
   - component: {fileID: 583614679}
-  m_Layer: 7
+  m_Layer: 4
   m_Name: Lake
   m_TagString: Untagged
   m_Icon: {fileID: 0}
